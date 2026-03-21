@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen Chat</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background-color: #615ced;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 12px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background-color: #615ced;
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background-color: #e9e9eb;
+            color: black;
+            border-bottom-left-radius: 2px;
+        }
+
+        .input-area {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            background: white;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        input[type="text"]:focus {
+            border-color: #615ced;
+        }
+
+        button {
+            background-color: #615ced;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #4f4ac2;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* Анимация загрузки */
+        .typing-indicator {
+            font-style: italic;
+            color: #888;
+            font-size: 0.9em;
+            margin-left: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">Qwen AI Chat</div>
+    <div class="chat-messages" id="chatMessages">
+        <!-- Сообщения будут появляться здесь -->
+        <div class="message bot">Привет! Я подключен к модели Qwen. Чем могу помочь?</div>
+    </div>
+    <div class="typing-indicator" id="typingIndicator">Qwen печатает...</div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Напишите сообщение..." onkeypress="handleEnter(event)">
+        <button onclick="sendMessage()" id="sendBtn">Send</button>
+    </div>
+</div>
+
+<script>
+    async function sendMessage() {
+        const inputField = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatMessages = document.getElementById('chatMessages');
+        const typingIndicator = document.getElementById('typingIndicator');
+        
+        const message = inputField.value.trim();
+        if (!message) return;
+
+        // 1. Отображаем сообщение пользователя
+        appendMessage(message, 'user');
+        inputField.value = '';
+        inputField.disabled = true;
+        sendBtn.disabled = true;
+        typingIndicator.style.display = 'block';
+
+        try {
+            // 2. Отправляем запрос на наш Python сервер
+            const response = await fetch('http://127.0.0.1:5000/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                appendMessage('Ошибка: ' + data.error, 'bot');
+            } else {
+                // 3. Отображаем ответ Qwen
+                appendMessage(data.reply, 'bot');
+            }
+
+        } catch (error) {
+            appendMessage('Ошибка соединения с сервером', 'bot');
+            console.error(error);
+        } finally {
+            // Возвращаем интерфейс в исходное состояние
+            inputField.disabled = false;
+            sendBtn.disabled = false;
+            typingIndicator.style.display = 'none';
+            inputField.focus();
+        }
+    }
+
+    function appendMessage(text, sender) {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender);
+        messageDiv.textContent = text;
+        chatMessages.appendChild(messageDiv);
+        
+        // Автопрокрутка вниз
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleEnter(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+</script>
+
+</body>
+</html>
