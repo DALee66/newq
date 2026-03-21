@@ -7,10 +7,9 @@ app = Flask(__name__)
 CORS(app)
 
 # Инициализация клиента DeepSeek
-# Мы берем ключ из переменной окружения
 client = OpenAI(
-    api_key=os.getenv('OPENAI_API_KEY'), 
-    base_url="https://api.deepseek.com"
+    api_key=os.getenv('DEEPSEEK_API_KEY') or os.getenv('OPENAI_API_KEY'),
+    base_url="https://api.deepseek.com"  # ← Без пробелов!
 )
 
 @app.route('/api/chat', methods=['POST'])
@@ -22,9 +21,8 @@ def chat():
         return jsonify({'error': 'Сообщение пустое'}), 400
 
     try:
-        # Запрос к модели DeepSeek
         response = client.chat.completions.create(
-            model="deepseek-chat",  # Или "deepseek-coder"
+            model="deepseek-chat",
             messages=[
                 {"role": "system", "content": "Ты полезный ассистент."},
                 {"role": "user", "content": user_message}
