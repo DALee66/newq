@@ -9,7 +9,7 @@ CORS(app)
 # Инициализация клиента DeepSeek
 client = OpenAI(
     api_key=os.getenv('DEEPSEEK_API_KEY') or os.getenv('OPENAI_API_KEY'),
-    base_url="https://api.deepseek.com"  # ← Без пробелов!
+    base_url="https://api.deepseek.com"
 )
 
 @app.route('/api/chat', methods=['POST'])
