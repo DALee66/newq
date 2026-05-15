@@ -22,7 +22,7 @@ def chat():
 
     try:
         response = client.chat.completions.create(
-            model="deepseek-chat",
+            model="deepseek/deepseek-chat",
             messages=[
                 {"role": "system", "content": "Ты полезный ассистент."},
                 {"role": "user", "content": user_message}
